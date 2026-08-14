@@ -10,6 +10,10 @@
 
 ## [未发布]
 
+## [1.0.0] - 2026-08-14
+
+首个正式版本。
+
 ### 新增
 
 - **脚手架骨架**：`skills/`（含 `example-skill` 完整示例）、`agents/`
@@ -55,3 +59,6 @@
   以插件方式安装、仓库没有 `scripts/validate.py` 时静默跳过而非报错。
 - 只承诺能验证的东西：不支持原生 Windows，因为没有对应的 CI runner，
   而钩子在其上失效是静默的。
+
+[未发布]: https://github.com/Bianzinan/agent-dev-kit/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Bianzinan/agent-dev-kit/releases/tag/v1.0.0
