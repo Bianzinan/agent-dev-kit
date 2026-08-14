@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Glob(**)",
+      "Grep(**)",
+      "Bash(python3 scripts/validate.py)",
+      "Bash(python3 scripts/new_skill.py:*)",
+      "Bash(python3 scripts/test_hooks.py)",
+      "Bash(make validate)",
+      "Bash(make test)",
+      "Bash(make check)",
+      "Bash(make lint)",
+      "Bash(make help)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./**/*.pem)",
+      "Bash(git push:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/hooks/pre_tool_use.py\""
+          }
+        ]
+      }
+    ]
+  }
+}

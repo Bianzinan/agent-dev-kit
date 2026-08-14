@@ -1,0 +1,43 @@
+{
+  "name": "agent-dev-kit",
+  "owner": {
+    "name": "sound",
+    "url": "https://github.com/Bianzinan"
+  },
+  "metadata": {
+    "description": "Claude Code 工程实践基座：skills / agents / commands / hooks / MCP 的可复用骨架",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "agent-dev-kit",
+      "description": "Agent 开发基座脚手架，包含示例技能、子 agent、斜杠命令与生命周期钩子",
+      "source": "./",
+      "skills": [
+        "./skills/example-skill"
+      ]
+    },
+    {
+      "name": "addy-agent-skills",
+      "description": "Addy Osmani 的 SDLC 工程技能集（24 个，覆盖 spec→plan→build→test→review→ship），遵循渐进披露。可选安装。",
+      "source": {
+        "source": "github",
+        "repo": "addyosmani/agent-skills",
+        "sha": "be42637c5af93fdc8526b68ec2f2651b930f316c"
+      },
+      "category": "engineering",
+      "defaultEnabled": false
+    },
+    {
+      "name": "mattpocock-skills",
+      "description": "Matt Pocock 的工程流程技能集（25 个，grill→to-spec→to-tickets→implement→tdd→code-review）。可选安装。",
+      "source": {
+        "source": "github",
+        "repo": "mattpocock/skills",
+        "sha": "8b78b531ab965735c5dc74f6f7a219e1e37326df"
+      },
+      "category": "engineering",
+      "defaultEnabled": false
+    }
+  ]
+}

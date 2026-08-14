@@ -1,0 +1,13 @@
+{
+  "name": "agent-dev-kit",
+  "description": "Agent 开发基座脚手架，包含示例技能、子 agent、斜杠命令与生命周期钩子",
+  "version": "1.0.0",
+  "author": {
+    "name": "sound",
+    "url": "https://github.com/Bianzinan"
+  },
+  "homepage": "https://github.com/Bianzinan/agent-dev-kit",
+  "repository": "https://github.com/Bianzinan/agent-dev-kit",
+  "license": "Apache-2.0",
+  "keywords": ["claude-code", "skills", "agents", "scaffold", "mcp"]
+}

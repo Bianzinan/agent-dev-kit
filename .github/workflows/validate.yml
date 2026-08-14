@@ -1,0 +1,121 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # 每周一 03:00 UTC 跑一次完整安装，验证外部工具链仍可用
+    - cron: "0 3 * * 1"
+
+jobs:
+  # 核心工具链是纯 Python 标准库实现。支持的平台是 Linux / macOS / WSL2，
+  # 其中 WSL2 就是 Linux，由 ubuntu-latest 覆盖。
+  core:
+    name: core on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # 结构校验覆盖脚本可执行位（读 git 索引，Windows 上同样有效）、
+      # LF 换行、钩子注册路径、技能脚本路径等约定，与本地 `make validate` 同一份实现
+      - name: Validate repository structure
+        run: python scripts/validate.py
+
+      - name: Hook regression tests
+        run: python scripts/test_hooks.py
+
+      - name: Release notes tests
+        run: python scripts/test_release_notes.py
+
+      - name: Skill scaffold round-trip
+        run: |
+          python scripts/new_skill.py ci-smoke-test
+          python scripts/validate.py
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Shellcheck
+        run: |
+          sudo apt-get update && sudo apt-get install -y shellcheck
+          find . -name '*.sh' -type f -not -path './.git/*' -print0 | xargs -0 shellcheck
+
+      - name: Python syntax check
+        run: python -m compileall -q hooks scripts
+
+      # 最低支持版本，防止用到 3.9+ 才有的语法或 API
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.8"
+      - name: Run full toolchain on Python 3.8
+        run: |
+          python scripts/validate.py
+          python scripts/test_hooks.py
+          python scripts/test_release_notes.py
+          python scripts/new_skill.py py38-smoke-test
+          python scripts/validate.py
+
+  bootstrap:
+    name: bootstrap on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # 常规 CI 只验证 bootstrap 自身的逻辑（参数解析、配置生成、权限修复、校验），
+      # 跳过 rtk / codegraph 的安装：那两步会从第三方仓库拉取未锁定版本的安装脚本，
+      # 不应该出现在每个 PR 的关键路径上。完整安装由下面的 full-install job 定期验证。
+      - name: Run bootstrap (skip external toolchain)
+        run: bash scripts/bootstrap.sh --skip-rtk --skip-codegraph
+
+      - name: Run bootstrap again (idempotency)
+        run: bash scripts/bootstrap.sh --skip-rtk --skip-codegraph
+
+      - name: Check mode is read-only
+        run: |
+          set -euo pipefail
+          git diff --exit-code
+          bash scripts/bootstrap.sh --check
+
+  full-install:
+    name: full install on ${{ matrix.os }}
+    # 会执行第三方安装脚本，只在定时任务与手动触发时运行，不阻塞 PR
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run bootstrap (full)
+        run: bash scripts/bootstrap.sh

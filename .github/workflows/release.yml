@@ -1,0 +1,64 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  # 补发用：上次发布失败时手动指定 tag 重跑，不必删掉再重推一个已发布的 tag。
+  # 注意它检出的是该 tag 的内容——tag 里必须已经带上 release_notes.py 与
+  # CHANGELOG 的对应小节，否则补发同样会失败。
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "要发布的 tag，如 v1.0.0"
+        required: true
+
+# 只需要创建 Release 的写权限，其余保持只读
+permissions:
+  contents: write
+
+env:
+  # push 事件下 inputs.tag 为空，回退到被推的 tag 名
+  TAG: ${{ inputs.tag || github.ref_name }}
+
+jobs:
+  release:
+    name: publish ${{ inputs.tag || github.ref_name }}
+    runs-on: ubuntu-latest
+    steps:
+      # fetch-depth: 0 会把 tag 一起拉下来。validate.py 的 check_version_tag
+      # 依赖 `git tag --points-at HEAD`，浅克隆下拿不到 tag，这道闸门就会静默失效。
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # 与 main 上跑的是同一份实现。这里额外承担一个发布专属的职责：
+      # check_version_tag 会确认这个 tag 与 plugin.json 的 version 一致，
+      # 版本对不上就不发布——避免 tag 说 v1.1.0、装出来却是 1.0.0。
+      - name: Validate repository structure
+        run: python scripts/validate.py
+
+      - name: Hook regression tests
+        run: python scripts/test_hooks.py
+
+      - name: Release notes tests
+        run: python scripts/test_release_notes.py
+
+      # Release 正文直接取自 CHANGELOG，两边不可能写成两个版本。
+      # CHANGELOG 里没有这一节时脚本会失败，Release 不会被创建。
+      - name: Extract release notes
+        run: python scripts/release_notes.py "$TAG" --output release-notes.md
+
+      # --verify-tag: 远端不存在该 tag 时拒绝创建，避免 gh 反过来替我们建 tag
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --notes-file release-notes.md \
+            --verify-tag

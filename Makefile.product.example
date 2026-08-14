@@ -1,0 +1,20 @@
+# 工程层的 make 目标 —— 复制为 Makefile.product 后按你的技术栈填写。
+#
+#   cp Makefile.product.example Makefile.product
+#
+# 为什么单独一个文件：根 Makefile 属于脚手架层，升级基座时会被覆盖。
+# 放这里你的目标不会冲突，`make help` 也会自动列出带 ## 注释的项。
+#
+# 约定：`make test` 会在跑完脚手架回归测试后自动调用 test-product（定义了才跑）。
+# 其余目标名随意，加上 ## 注释就能出现在 make help 里。
+
+.PHONY: test-product lint-product build-product
+
+test-product: ## 运行工程层（src/）的测试
+	@echo "TODO: 填入你的测试命令，例如 pytest / npm test / go test ./..."
+
+lint-product: ## 工程层的 lint 与类型检查
+	@echo "TODO: 填入你的 lint 命令，例如 ruff check . / eslint src/"
+
+build-product: ## 构建产物
+	@echo "TODO: 填入你的构建命令"

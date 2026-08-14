@@ -1,0 +1,24 @@
+# 统一换行符为 LF。
+#
+# 换行规则固定在这里，而不是依赖每个人的 core.autocrlf 配置。一旦脚本被写成
+# CRLF，shebang 就成了 '#!/usr/bin/env bash\r'，执行时报
+# "bad interpreter: no such file or directory" —— 钩子静默失效。
+# validate.py 有对应的兜底校验。
+
+* text=auto eol=lf
+
+*.sh   text eol=lf
+*.py   text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.yml  text eol=lf
+*.toml text eol=lf
+Makefile text eol=lf
+
+# 二进制文件不做任何转换
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary

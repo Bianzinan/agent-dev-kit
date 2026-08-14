@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "codegraph": {
+      "command": "cgc",
+      "args": ["mcp", "start"],
+      "env": {
+        "CGC_RUNTIME_DB_TYPE": "kuzudb",
+        "CGC_RUNTIME_DB_PATH": "${CLAUDE_PROJECT_DIR}/.cgc/graph.kuzu"
+      }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "${CLAUDE_PROJECT_DIR}"]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
+    }
+  }
+}
