@@ -10,6 +10,36 @@
 
 ## [未发布]
 
+## [1.2.0] - 2026-09-07
+
+### 变更
+
+- **外部技能引用改锁 release。** `marketplace.json` 里两个外部插件的 `sha` 原先指向
+  无 tag 的 main commit，现改为 release tag 对应的 commit，并在 description 写明 tag：
+  `addyosmani/agent-skills` → 0.6.9（25 个技能），`mattpocock/skills` → v1.2.3
+  （35 个技能）。新增约定：外部 `sha` 必须是某个 release tag 指向的 commit。
+- **`skills` 数组明确为分发白名单。** 本仓库的插件 source 是 marketplace 根，按
+  Claude Code 规则显式声明的 `skills` 会取代默认扫描。据此定下约定
+  「未登记 = 开发中，不分发」，`validate.py` 的提示措辞与 `docs/02` 清单随之调整。
+  半成品技能不再需要单独目录。
+- **`docs/00` 新增术语表。** 脚手架层 / 工程层 / 产品 / 技能 / 插件 / 登记 /
+  常驻上下文成本各给定义与不再使用的别名，并记录已解决的歧义。
+
+### 修正
+
+- `docs/05` 的技能数与常驻成本按当前锁定版本实测校准：addyosmani 24 → 25、
+  ~1.9k → ~2.3k tokens；mattpocock 25 → 35（含会随插件分发的 in-progress 6 与
+  misc 4）、~1.9k → ~1.6k tokens。
+- `docs/05` 「升级外部依赖」原先的命令取的是 main 最新 commit——正是本次废弃的做法。
+  改为按 tag 取 commit，并说明附注 tag 需多解一层。
+
+### 评估说明
+
+本次曾评估借鉴 mattpocock/skills v1.2.3 的两处做法：`skills/<分类>/` 嵌套目录与根
+`CONTEXT.md`。结论：嵌套结构未见于 Claude Code 官方文档、且需改 15 处，不采用——
+分发白名单已经提供了生命周期；术语表采用其形式但并入 `docs/00`，因为 `CONTEXT.md`
+这个文件名只对它自家技能有约定意义。
+
 ## [1.1.0] - 2026-09-07
 
 ### 变更
@@ -100,6 +130,7 @@ make setup && make index             # 装新 CLI 并重建索引
 - 只承诺能验证的东西：不支持原生 Windows，因为没有对应的 CI runner，
   而钩子在其上失效是静默的。
 
-[未发布]: https://github.com/Bianzinan/agent-dev-kit/compare/v1.1.0...HEAD
+[未发布]: https://github.com/Bianzinan/agent-dev-kit/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/Bianzinan/agent-dev-kit/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/Bianzinan/agent-dev-kit/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Bianzinan/agent-dev-kit/releases/tag/v1.0.0
