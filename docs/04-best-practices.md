@@ -13,10 +13,10 @@
 在大型代码库里 `grep -r` 既慢又噪音大。本仓库集成了 codegraph MCP，把代码索引成图：
 
 ```bash
-cgc --database kuzudb --path ./.cgc/graph.kuzu index .
+make index    # 首次等价于 codegraph init -y .
 ```
 
-之后可以直接查符号定义、调用链、依赖关系、死代码、圈复杂度。检索代码时的优先级：
+之后可以直接查符号定义、调用链、依赖关系与改动影响范围。检索代码时的优先级：
 
 **codegraph MCP 工具 > glob（按文件名）> grep（按内容）> 全库扫描**
 

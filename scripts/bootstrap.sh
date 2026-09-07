@@ -52,7 +52,7 @@ WARNINGS=0
 
 has() { command -v "$1" >/dev/null 2>&1; }
 
-# 部分工具（如 cgc）把版本号打到 stderr，这里统一合并捕获
+# 部分工具把版本号打到 stderr，这里统一合并捕获
 version_of() { "$@" 2>&1 | head -1; }
 
 # 把常见的用户级 bin 目录并入 PATH，便于检测刚装好的工具
@@ -178,54 +178,40 @@ install_rtk() {
 }
 
 # ---------- codegraph ----------
+# https://github.com/colbymchenry/codegraph
+CODEGRAPH_INSTALL_URL="https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh"
+
 install_codegraph() {
-  if has cgc; then
-    ok "codegraph 已安装（$(version_of cgc --version)）"
+  if has codegraph; then
+    ok "codegraph 已安装（$(version_of codegraph --version)）"
     return 0
   fi
 
   if [[ $CHECK_ONLY -eq 1 ]]; then
-    warn "codegraph (cgc) 未安装"
+    warn "codegraph 未安装"
     WARNINGS=$((WARNINGS + 1))
     return 0
   fi
 
   echo "正在安装 codegraph（代码图谱 MCP 服务器）..."
 
-  # codegraphcontext 要求 Python >= 3.10。uv 能自带并管理独立的 Python，
-  # 避免依赖系统 Python 版本，也不污染系统环境。
-  if ! has uv; then
-    echo "  未找到 uv，正在安装（用于隔离安装 Python 工具）..."
-    if [[ "$OS" == "macos" ]] && has brew; then
-      brew install uv || true
-    fi
-    if ! has uv; then
-      if has curl; then
-        curl -LsSf https://astral.sh/uv/install.sh | sh || true
-      elif has wget; then
-        wget -qO- https://astral.sh/uv/install.sh | sh || true
-      fi
-      export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
-    fi
+  # 官方安装脚本下发的是自带 Node 运行时的独立包：装进 ~/.codegraph，
+  # 在 ~/.local/bin 建软链。不依赖系统 Node，也不写系统目录。
+  if has curl; then
+    if curl -fsSL "$CODEGRAPH_INSTALL_URL" | sh; then return 0; fi
+    warn "官方安装脚本执行失败"
+  elif has wget; then
+    if wget -qO- "$CODEGRAPH_INSTALL_URL" | sh; then return 0; fi
+    warn "官方安装脚本执行失败"
   fi
 
-  if has uv; then
-    if uv tool install --python 3.12 codegraphcontext; then
-      export PATH="$HOME/.local/bin:$PATH"
-      return 0
-    fi
-    warn "uv 安装 codegraphcontext 失败"
-  else
-    warn "uv 不可用"
+  # 回退：系统已有 Node 时走 npm 全局包
+  if has npm; then
+    info "回退到 npm 安装"
+    if npm i -g @colbymchenry/codegraph; then return 0; fi
   fi
 
-  # 回退：系统 Python 已经是 3.10+ 时直接用 pip
-  if "$PYTHON" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null; then
-    info "回退到 pip 安装"
-    "$PYTHON" -m pip install --user codegraphcontext && return 0
-  fi
-
-  warn "codegraph 自动安装失败，可手动安装: uv tool install --python 3.12 codegraphcontext"
+  warn "codegraph 自动安装失败，可手动安装: npm i -g @colbymchenry/codegraph"
   info "codegraph 是可选增强，缺少它不影响仓库校验与技能使用"
   WARNINGS=$((WARNINGS + 1))
   return 0
@@ -237,7 +223,7 @@ if [[ $SKIP_RTK -eq 0 ]]; then
 fi
 
 if [[ $SKIP_CODEGRAPH -eq 0 ]]; then
-  step "codegraph (CodeGraphContext)"
+  step "codegraph (CodeGraph)"
   install_codegraph
 fi
 
@@ -282,14 +268,20 @@ fi
 # ---------- codegraph 索引 ----------
 if [[ $DO_INDEX -eq 1 && $CHECK_ONLY -eq 0 ]]; then
   step "建立 codegraph 索引"
-  if has cgc; then
-    if (cd "$ROOT" && cgc --database kuzudb --path ./.cgc/graph.kuzu index .); then
+  if has codegraph; then
+    # init 会创建 .codegraph/ 并建全量索引；已初始化过的项目只需重建索引。
+    if [[ -d "$ROOT/.codegraph" ]]; then
+      cg_cmd=(codegraph index .)
+    else
+      cg_cmd=(codegraph init -y .)
+    fi
+    if (cd "$ROOT" && "${cg_cmd[@]}"); then
       ok "索引完成"
     else
-      warn "索引失败，可稍后手动执行"
+      warn "索引失败，可稍后手动执行 make index"
     fi
   else
-    warn "cgc 不可用，跳过索引"
+    warn "codegraph 不可用，跳过索引"
   fi
 fi
 
@@ -318,8 +310,8 @@ else
   warn "rtk        未安装（可选）"
 fi
 
-if has cgc; then
-  ok "codegraph  $(version_of cgc --version)"
+if has codegraph; then
+  ok "codegraph  $(version_of codegraph --version)"
 else
   warn "codegraph  未安装（可选）"
 fi
@@ -336,10 +328,10 @@ cat <<EOF
        /plugin marketplace add $ROOT
        /plugin install agent-dev-kit
   2. 建立代码图谱索引（首次使用 codegraph 前）:
-       cgc --database kuzudb --path ./.cgc/graph.kuzu index .
+       make index        # 等价于 codegraph init -y .
   3. 新增技能:
        python3 scripts/new_skill.py <skill-name>
 
-若 rtk / cgc 提示 command not found，请把 ~/.local/bin 加入 PATH:
+若 rtk / codegraph 提示 command not found，请把 ~/.local/bin 加入 PATH:
   export PATH="\$HOME/.local/bin:\$PATH"
 EOF

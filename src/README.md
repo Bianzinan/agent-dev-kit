@@ -48,7 +48,7 @@
 `make index` 会索引整个仓库，`src/` 有代码后即可用图谱做符号查找与调用链分析：
 
 ```bash
-make index    # cgc --database kuzudb --path ./.cgc/graph.kuzu index .
+make index    # 首次等价于 codegraph init -y .，之后等价于 codegraph index .
 ```
 
 索引建立后优先用 codegraph MCP 工具检索符号与调用关系，而不是全仓库 grep。
