@@ -195,12 +195,18 @@ description。完整说明见 `docs/00-boundaries.md`。
    技能执行时 cwd 是**用户的项目根目录**，不是技能目录。写成 `scripts/xxx.py`
    会解析到项目自己的 `scripts/`，必然 file-not-found。`validate.py` 会拦截这种写法。
 7. 需随插件分发时，在 `.claude-plugin/marketplace.json` 的 `skills` 数组登记路径。
+   这个数组是**分发白名单**：本仓库的插件 source 是 marketplace 根（`"./"`），
+   按 Claude Code 的规则，这种情况下显式声明的 `skills` 会**取代**默认的 `skills/`
+   扫描。由此约定：**未登记 = 开发中，不分发；登记 = 毕业**。半成品放在 `skills/`
+   里照样过 `make validate`，不登记就不会流出去，不需要 `in-progress/` 之类的目录。
 
 ## 外部技能仓库
 
 引用第三方技能集时**不要 vendoring**（复制代码进本仓库），一律在
 `marketplace.json` 里用 `github` source 引用，并且**必须用 40 位 `sha` 锁定 commit**
-——只写分支名会被 `validate.py` 直接判为失败。新增的外部插件默认写
+——只写分支名会被 `validate.py` 直接判为失败。这个 sha **必须是上游某个 release
+tag 指向的 commit**，tag 名写进 description：锁任意 main commit 只保证字节可复现，
+说不清分发的是哪个版本。取 sha 的步骤见 `docs/05`。新增的外部插件默认写
 `"defaultEnabled": false`，避免平白增加常驻上下文成本。
 
 选型结论与风险说明见 `docs/05-external-skills.md`。注意：不要在本仓库运行

@@ -531,8 +531,9 @@ def check_doc_links() -> None:
 def check_skill_registration() -> None:
     """技能存在但未在 marketplace 登记时提示（不失败）。
 
-    登记与否是有意选择——本地实验性技能可以不登记。但「写完忘了登记，
-    分发出去缺技能」也很常见，所以这里提示一下。
+    skills 数组是分发白名单：本仓库的插件 source 是 marketplace 根，显式声明的
+    skills 会取代默认扫描。仓库约定「未登记 = 开发中，不分发」，所以未登记是
+    合法状态；这里只提示，防止「写完忘了登记，分发出去缺技能」。
     """
     skills_dir = ROOT / "skills"
     manifest = ROOT / ".claude-plugin" / "marketplace.json"
@@ -555,7 +556,7 @@ def check_skill_registration() -> None:
     for name in sorted(present - registered):
         notice(
             f"技能 '{name}' 未登记到 marketplace.json 的 skills 数组，"
-            "不会随插件分发（若是有意为之可忽略）"
+            "不随插件分发。仓库约定「未登记 = 开发中」；已可发布请登记"
         )
 
 

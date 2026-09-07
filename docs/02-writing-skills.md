@@ -96,6 +96,8 @@ python3 scripts/run.py --format json
 - [ ] 调用自带脚本时写了 `${CLAUDE_PLUGIN_ROOT}/skills/<name>/scripts/...` 完整路径
 - [ ] 脚本有可执行位（`chmod +x`）
 - [ ] 有明确的输出约定（格式、位置、失败处理）
+- [ ] 可以发布了才登记到 `marketplace.json` 的 `skills` 数组——
+      它是分发白名单，未登记 = 开发中，不分发
 - [ ] `make validate` 与 `make test` 均通过
 
 ## 参考实现
