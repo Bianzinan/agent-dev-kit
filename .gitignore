@@ -12,7 +12,7 @@ build/
 .claude/settings.local.json
 
 # codegraph 索引数据（体积大且可重建）
-.cgc/
+.codegraph/
 
 # rtk 运行时数据
 .rtk/cache/

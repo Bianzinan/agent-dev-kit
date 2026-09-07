@@ -42,7 +42,7 @@ new-skill: ## 新建技能，用法: make new-skill NAME=my-skill
 	@python3 scripts/new_skill.py "$(NAME)"
 
 index: ## 建立/刷新 codegraph 代码图谱索引
-	@cgc --database kuzudb --path ./.cgc/graph.kuzu index .
+	@if [ -d .codegraph ]; then codegraph index .; else codegraph init -y .; fi
 
 lint: ## 对 shell 脚本运行 shellcheck，对 Python 脚本做语法检查
 	@if command -v shellcheck >/dev/null 2>&1; then \
@@ -53,6 +53,6 @@ lint: ## 对 shell 脚本运行 shellcheck，对 Python 脚本做语法检查
 	@python3 -m compileall -q hooks scripts >/dev/null && echo "✓ Python 语法检查通过"
 
 clean: ## 清理本地生成的索引与缓存
-	@rm -rf .cgc
+	@rm -rf .codegraph
 	@find . -name '__pycache__' -type d -prune -exec rm -rf {} + 2>/dev/null || true
-	@echo "✓ 已清理 .cgc/ 与 __pycache__/"
+	@echo "✓ 已清理 .codegraph/ 与 __pycache__/"

@@ -115,7 +115,7 @@ cd ~ && git clone <repo-url> agent-dev-kit
 
 `bootstrap.sh` 检测到 `/mnt/` 路径会给出警告。
 
-### `rtk` / `cgc` 提示 command not found
+### `rtk` / `codegraph` 提示 command not found
 
 两者都是**可选增强**，缺失不影响校验与技能。要修就把用户级 bin 加进 PATH：
 
@@ -125,8 +125,8 @@ export PATH="$HOME/.local/bin:$PATH"    # 写进 ~/.zshrc 或 ~/.bashrc 持久�
 
 ### `make setup` 装 codegraph 失败
 
-`codegraphcontext` 要求 Python ≥ 3.10，而本仓库自身只要求 3.8。脚本会先尝试用
-`uv` 装一个独立的 3.12，失败则回退 pip。都失败也只是降级提醒，可以先跳过：
+脚本会先跑官方安装脚本（下发自带 Node 运行时的独立包，装进 `~/.codegraph`），
+失败则回退 `npm i -g @colbymchenry/codegraph`。都失败也只是降级提醒，可以先跳过：
 
 ```bash
 bash scripts/bootstrap.sh --skip-codegraph
@@ -138,8 +138,11 @@ bash scripts/bootstrap.sh --skip-codegraph
 
 ```bash
 make index
-cgc --database kuzudb --path ./.cgc/graph.kuzu stats
+codegraph status .
 ```
+
+索引写在 `.codegraph/` 下（已被 gitignore）。若报锁冲突，用 `codegraph unlock .`
+清掉残留锁文件；后台守护进程用 `codegraph daemon` 管理。
 
 `src/` 为空时索引里自然没有业务代码符号。
 

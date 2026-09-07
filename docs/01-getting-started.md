@@ -64,7 +64,7 @@ CI 在 ubuntu 与 macos 两个 runner 上跑同一套 `validate.py` + `test_hook
 | Node.js | ≥ 18 | 否 | filesystem / github 两个 MCP 服务器用 `npx` 拉起 |
 | make | 任意 | 否 | 命令快捷入口，等价脚本调用见 `Makefile` |
 | rtk | ≥ 0.45 | 否 | CLI 输出压缩 |
-| cgc | ≥ 0.5 | 否 | codegraph MCP 服务器（自身需要 Python ≥ 3.10） |
+| codegraph | ≥ 1.6 | 否 | codegraph MCP 服务器（官方安装包自带 Node 运行时） |
 
 ### Windows 用户：装 WSL2
 
@@ -166,28 +166,59 @@ rtk init --agent claude    # 向 CLAUDE.md 注入使用说明
 rtk gain                   # 查看累计节省的 token
 ```
 
-### codegraph（CodeGraphContext）
+### codegraph
 
-把代码库索引成图数据库，向 Agent 提供符号、调用关系与依赖上下文。
+[colbymchenry/codegraph](https://github.com/colbymchenry/codegraph)，把代码库索引成
+知识图谱，向 Agent 提供符号、调用关系与影响范围。
 
 ```bash
-# 需要 Python >= 3.10，用 uv 隔离安装可避免污染系统环境
-uv tool install --python 3.12 codegraphcontext
+# 官方安装包自带 Node 运行时，装进 ~/.codegraph 并在 ~/.local/bin 建软链
+curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh
+
+# 已有 Node 也可以走 npm
+npm i -g @colbymchenry/codegraph
 ```
 
-安装后得到 `cgc` 命令。本仓库使用 KuzuDB 嵌入式后端，**无需**额外启动 Neo4j：
+安装后得到 `codegraph` 命令。索引落在项目内的 `.codegraph/codegraph.db`
+（SQLite + FTS5），**无需**额外启动数据库服务：
 
 ```bash
 # 建立索引（首次使用前执行）
 make index
-# 等价于 cgc --database kuzudb --path ./.cgc/graph.kuzu index .
+# 首次等价于 codegraph init -y .，之后等价于 codegraph index .
 
 # 查看索引统计
-cgc --database kuzudb --path ./.cgc/graph.kuzu stats
+codegraph status .
+
+# 改完代码增量同步（MCP 服务器默认自带文件监听，一般不用手动跑）
+codegraph sync .
+
+# 命令行里直接查符号 / 查调用关系 / 评估改动影响
+codegraph query <符号名>
+codegraph callers <符号名>
+codegraph callees <符号名>
+codegraph impact <符号名>
 ```
 
-MCP 服务器已在 `.mcp.json` 中注册，Claude Code 启动时会自动拉起，提供 25 个工具
-（符号查找、调用链分析、死代码检测、圈复杂度计算、Cypher 查询等）。
+MCP 服务器已在 `.mcp.json` 中注册，Claude Code 启动时会自动拉起。
+
+它一共定义了 8 个工具，但 `tools/list` **默认只列出 `codegraph_explore`** 一个——
+传自然语言问题或符号名，一次调用即返回带行号的源码与彼此的调用路径，
+省掉逐个文件读的往返。剩下 7 个（`node` / `search` / `callers` / `callees` /
+`impact` / `files` / `status`）handler 完好、能直接调用，只是不列出来：上游的判断是
+它们都只是 explore 的更窄切片，摆在工具列表里反而会诱导模型选错。
+
+要把它们全部列出来，在 `.mcp.json` 的 codegraph 条目里加环境变量：
+
+```json
+"env": { "CODEGRAPH_MCP_TOOLS": "explore,node,search,callers,callees,impact,files,status" }
+```
+
+这 7 个能力在 CLI 侧也各有对应子命令（见上面的 `codegraph callers/callees/impact`），
+不想改 MCP 配置时用终端跑同样能拿到结果。
+
+在 WSL2 的 `/mnt/` 挂载盘下文件监听会很慢，可以给 `.mcp.json` 的 args 加
+`--no-watch` 关掉自动同步，改为手动 `codegraph sync .`。
 
 ### PATH 问题
 

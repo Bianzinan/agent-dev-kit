@@ -61,9 +61,9 @@ make help                      # 列出全部命令
 | `make validate` | 校验仓库结构（**提交前必跑**） | `python3 scripts/validate.py` |
 | `make test` | 脚手架回归测试 + 工程层 `test-product`（定义了才跑） | `python3 scripts/test_hooks.py`<br>`python3 scripts/test_release_notes.py` |
 | `make new-skill NAME=x` | 从模板生成新技能 | `python3 scripts/new_skill.py x` |
-| `make index` | 建立 codegraph 代码图谱索引 | `cgc --database kuzudb --path ./.cgc/graph.kuzu index .` |
+| `make index` | 建立 codegraph 代码图谱索引 | `codegraph init -y .` / `codegraph index .` |
 | `make lint` | shellcheck + Python 语法检查 | 见 `Makefile` |
-| `make clean` | 清理 `.cgc/` 与 `__pycache__/` | — |
+| `make clean` | 清理 `.codegraph/` 与 `__pycache__/` | — |
 
 安装脚本的常用变体：
 
@@ -224,7 +224,7 @@ make test     # 脚手架 31+13 个用例 → 再跑 test-product（若已定义
 | 子 Agent | `test-runner` | 自动探测测试命令并运行，通过时一行摘要，失败时完整诊断 |
 | 命令 | `/review [范围]` | 对当前改动执行代码审查 |
 | 命令 | `/ship [说明]` | 提交前完整检查：**先判断改动落在哪一层**，跑该层的校验与测试 → 审查 → 生成提交信息 |
-| MCP | `codegraph` | 代码图谱索引，符号查找 / 调用链 / 死代码 / 圈复杂度等 [25 个工具](https://github.com/Shashankss1205/CodeGraphContext/blob/main/docs/MCP_TOOLS.md) |
+| MCP | `codegraph` | [代码知识图谱](https://github.com/colbymchenry/codegraph)，8 个工具，默认只列出 `codegraph_explore`：一次调用拿到源码 + 调用路径 |
 | MCP | `filesystem` | 标准文件系统访问 |
 | MCP | `github` | GitHub 集成，需设置 `GITHUB_PERSONAL_ACCESS_TOKEN` |
 
@@ -235,7 +235,7 @@ make test     # 脚手架 31+13 个用例 → 再跑 test-product（若已定义
 失效是**静默**的，用户会以为有防护。
 
 必需依赖只有三个：**git**、**Python ≥ 3.8**（仅标准库，无需 pip 装包）、**Claude Code**。
-Bash / Node.js / make / rtk / cgc 均为可选。完整依赖表、WSL2 安装步骤与手动安装
+Bash / Node.js / make / rtk / codegraph 均为可选。完整依赖表、WSL2 安装步骤与手动安装
 工具链见 [01 · 快速开始](docs/01-getting-started.md)。
 
 ## 校验与测试

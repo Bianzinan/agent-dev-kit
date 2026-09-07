@@ -1,12 +1,9 @@
 {
   "mcpServers": {
     "codegraph": {
-      "command": "cgc",
-      "args": ["mcp", "start"],
-      "env": {
-        "CGC_RUNTIME_DB_TYPE": "kuzudb",
-        "CGC_RUNTIME_DB_PATH": "${CLAUDE_PROJECT_DIR}/.cgc/graph.kuzu"
-      }
+      "type": "stdio",
+      "command": "codegraph",
+      "args": ["serve", "--mcp", "--path", "${CLAUDE_PROJECT_DIR}"]
     },
     "filesystem": {
       "command": "npx",

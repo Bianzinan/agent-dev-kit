@@ -245,7 +245,7 @@ make setup     # 等价于 bash scripts/bootstrap.sh
 报错并给出 WSL2 指引。详见 `docs/01-getting-started.md` 的「运行环境」一节。
 
 它会自动安装 rtk 与 codegraph、生成本地配置、修复脚本执行位并跑校验。
-rtk / cgc 缺失不影响核心功能，脚本会降级提醒而非报错。
+rtk / codegraph 缺失不影响核心功能，脚本会降级提醒而非报错。
 
 ## 提交前必做
 
@@ -301,10 +301,17 @@ tag 与 `plugin.json` 的 version 对不上时校验会失败，Release 不会�
 
 `.mcp.json` 中配置了项目级 MCP 服务器：
 
-- **codegraph**（`cgc mcp start`）——把代码库索引成图数据库，提供跨文件的符号、
-  调用关系与依赖上下文。使用 KuzuDB 嵌入式后端，无需额外启动数据库服务。
-  首次使用前需建立索引：`cgc --database kuzudb --path ./.cgc/graph.kuzu index .`
-  优先用它做符号查找、调用链追踪、依赖分析，而不是全仓库 grep。
+- **codegraph**（[colbymchenry/codegraph](https://github.com/colbymchenry/codegraph)，
+  `codegraph serve --mcp`）——把代码库索引成知识图谱，提供跨文件的符号、调用关系
+  与影响范围。索引落在项目内的 `.codegraph/codegraph.db`（SQLite + FTS5），
+  无需额外启动数据库服务。首次使用前需建立索引：`make index`。
+  共 8 个 MCP 工具，但**默认只 list 出 `codegraph_explore`**：传自然语言问题或符号名，
+  一次调用即返回带行号的源码 + 相互间的调用路径。查符号、追调用链、评估改动影响
+  都用它，优先于全仓库 grep。
+  另外 7 个（`node` / `search` / `callers` / `callees` / `impact` / `files` / `status`）
+  handler 仍在、可直接调用，只是不出现在工具列表里——上游认为它们都是 explore 的
+  更窄切片，露出来反而诱导选错工具。要全部列出：给 `.mcp.json` 加环境变量
+  `CODEGRAPH_MCP_TOOLS=explore,node,search,callers,callees,impact,files,status`。
 - **filesystem** / **github**——标准 MCP 参考实现，github 需要设置
   `GITHUB_PERSONAL_ACCESS_TOKEN` 环境变量。
 
