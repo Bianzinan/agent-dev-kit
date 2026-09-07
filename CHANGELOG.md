@@ -10,6 +10,46 @@
 
 ## [未发布]
 
+## [1.1.0] - 2026-09-07
+
+### 变更
+
+- **codegraph 换成 [colbymchenry/codegraph](https://github.com/colbymchenry/codegraph)**，
+  替换原先的 CodeGraphContext。对照表：
+
+  | | 旧 | 新 |
+  | --- | --- | --- |
+  | CLI | `cgc` | `codegraph` |
+  | MCP 启动 | `cgc mcp start` | `codegraph serve --mcp` |
+  | 索引位置 | `.cgc/graph.kuzu`（KuzuDB） | `.codegraph/codegraph.db`（SQLite + FTS5） |
+  | 安装依赖 | Python ≥ 3.10 + uv | 无（官方包自带 Node 运行时） |
+
+- `scripts/bootstrap.sh` 的 `install_codegraph` 改走官方安装脚本，失败回退
+  `npm i -g @colbymchenry/codegraph`；不再为了装它而先装 uv 和一个独立 Python。
+- `make index` 改为按 `.codegraph/` 是否存在分派：首次跑 `codegraph init -y .`，
+  之后跑 `codegraph index .`——新 CLI 在未初始化的目录直接执行 `index` 会报错。
+- `make clean` 与 `.gitignore` 的索引路径同步改为 `.codegraph/`。
+
+### 说明
+
+- 新的 MCP 服务器定义了 8 个工具，但默认只在 `tools/list` 里列出
+  `codegraph_explore`——一次调用即返回相关符号的带行号源码与彼此的调用路径。
+  其余 7 个（`node` / `search` / `callers` / `callees` / `impact` / `files` /
+  `status`）handler 完好、可直接调用，只是不列出，以免工具过多诱导选错。
+  需要全部列出时给 `.mcp.json` 加 `CODEGRAPH_MCP_TOOLS` 环境变量，详见
+  `docs/01-getting-started.md`。
+
+### 升级说明
+
+从 1.0.0 升级需要手动清理旧工具（codegraph 是可选增强，不清理也不影响校验与技能）：
+
+```bash
+uv tool uninstall codegraphcontext   # 移除旧的 cgc
+rm -rf .cgc                          # 删掉旧索引
+rm -rf ~/.codegraphcontext           # 删掉旧的全局配置
+make setup && make index             # 装新 CLI 并重建索引
+```
+
 ## [1.0.0] - 2026-08-14
 
 首个正式版本。
@@ -60,5 +100,6 @@
 - 只承诺能验证的东西：不支持原生 Windows，因为没有对应的 CI runner，
   而钩子在其上失效是静默的。
 
-[未发布]: https://github.com/Bianzinan/agent-dev-kit/compare/v1.0.0...HEAD
+[未发布]: https://github.com/Bianzinan/agent-dev-kit/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/Bianzinan/agent-dev-kit/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Bianzinan/agent-dev-kit/releases/tag/v1.0.0
